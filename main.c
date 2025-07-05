@@ -14,15 +14,8 @@
 
 #include "tui.h"
 
-int main(void) {
-    tui t = {0};
-
-    init_tui(&t);
-
-    clear_screen(&t);
-
-    /* ======= Draw git status ======= */
-
+/* Print git status */
+void git_status(tui* t) {
     FILE *fp;
 
     /* Open the command for reading. */
@@ -32,12 +25,18 @@ int main(void) {
         exit(1);
     }
 
-    print_text(&t, fp, 0, 0);
+    clear_screen(t);
+    print_text(t, fp, 0, 0);
 
     /* close */
     pclose(fp);
+}
 
-    /* ============== */
+int main(void) {
+    tui t = {0};
+    init_tui(&t);
+
+    git_status(&t);
 
     char buffer[t.cols + 1];
     while(1) {
@@ -69,8 +68,36 @@ int main(void) {
             case 's':
                 get_line(&t, buffer);
                 /* Function that parses the string and calls git add if
-                 * the cursor was pointing a file */ 
-                printf("READ: %s", buffer);
+                 * the cursor was pointing a file */
+
+                int i = 0;
+                char c = buffer[i];
+                char* filename_pos = NULL;
+
+                while (c != '\r') {
+
+                    /* Using : for detect if the line has a git status file
+                     * I can do much better.*/
+                    if (c == ':') {
+                        c = buffer[++i];
+
+                        /* Skip whitespace until it reaches the start of the filename */
+                        while (c == ' ') c = buffer[++i];
+
+                        filename_pos = &(buffer[i]);
+                    }
+
+                    c = buffer[++i];
+                }
+                buffer[i] = '\0';
+
+                if (filename_pos) {
+                    /* Reusing buffer for compose git add command */
+                    sprintf(buffer, "git add '%s'", filename_pos);
+                    system(buffer);
+                    git_status(&t);
+                }
+
                 break;
 
             case 'u':
