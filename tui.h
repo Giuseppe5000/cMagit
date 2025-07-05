@@ -9,11 +9,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <errno.h>
 #include <unistd.h>
 
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 1024
+
 typedef struct {
+
+    /* Screen status */
+    int rows;
+    int cols;
+    char* screen; /* Screen characters */
 
     /* Cursor pos */
     int cursor_x;
@@ -24,7 +33,7 @@ typedef struct {
     int output_fd;
 
     /* In order to restore terminal status at exit.*/
-    struct termios orig_termios; 
+    struct termios orig_termios;
 
 } tui;
 
@@ -58,7 +67,8 @@ char get_key_input(tui* t);
  * at specified position (x,y) */
 void print_text(tui* t, FILE* fp, int x, int y);
 
-/* Get the characters on the cursor lines and puts in buffer */
+/* Get the characters on the cursor lines and puts in buffer.
+ * Buffer size MUST be >= t->cols + 1 */
 void get_line(tui* t, char* buffer);
 
 #endif

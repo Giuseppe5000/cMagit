@@ -3,6 +3,12 @@
 int init_tui(tui* t) {
 
     /* Init the tui struct */
+
+    // TODO: get this size from the terminal window
+    t->rows = SCREEN_WIDTH;
+    t->cols = SCREEN_HEIGHT;
+
+    t->screen = calloc(t->rows * t->cols, sizeof(char));
     t->cursor_x = 1;
     t->cursor_y = 1;
     t->input_fd = STDIN_FILENO;
@@ -39,8 +45,10 @@ fatal:
 }
 
 
-/* Disable terminal raw mode, restoring the initial term conf*/
 void delete_tui(tui* t) {
+    free(t->screen);
+
+    /* Disable terminal raw mode, restoring the initial term conf*/
     tcsetattr(t->input_fd,TCSAFLUSH,&(t->orig_termios));
 }
 
@@ -82,23 +90,38 @@ void print_text(tui* t, FILE* fp, int x, int y) {
     int old_cursor_y = t->cursor_y;
     move_cursor(t, x, y);
 
-
     char c = fgetc(fp);
     while (c != EOF) {
 
         /* Adding \r before each \n for going to the next line
          * in the right way
          */
-        if (c == '\n') printf("\r");
+        if (c == '\n') {
+            printf("\r\n");
 
-        printf("%c", c);
+            t->screen[y * t->cols + x] = '\r'; /* Update screen*/
+            x = 0;
+            y++;
+        } else {
+            printf("%c", c);
+
+            t->screen[y * t->cols + x] = c; /* Update screen*/
+            x++;
+        }
+
         c = fgetc(fp);
     }
 
     move_cursor(t, old_cursor_x, old_cursor_y);
 }
 
+// TODO: It can return the pointer to t->screen (casted to const*)
+// instead of using external buffer
 void get_line(tui* t, char* buffer) {
-    fprintf(stderr, "UNIMPLEMENTED");
-    exit(1);
+    /* Copying current line into buffer */
+    int current_line = t->cursor_y - 1;
+    memcpy(buffer, &(t->screen[current_line * t->cols]), t->cols*sizeof(char));
+
+    /* Setting endline */
+    buffer[t->cols + 1] = '\n';
 }

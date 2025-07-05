@@ -39,7 +39,7 @@ int main(void) {
 
     /* ============== */
 
-
+    char buffer[t.cols + 1];
     while(1) {
         char c = get_key_input(&t);
 
@@ -67,8 +67,10 @@ int main(void) {
                 break;
 
             case 's':
-                printf("Stage file");
-                fflush(stdout);
+                get_line(&t, buffer);
+                /* Function that parses the string and calls git add if
+                 * the cursor was pointing a file */ 
+                printf("READ: %s", buffer);
                 break;
 
             case 'u':
